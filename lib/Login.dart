@@ -30,7 +30,6 @@ class SizeConfig {
   }
 }
 
-
 class CommonWidgets {
   static Widget verticalSpace(double height) =>
       SizedBox(height: SizeConfig.blockSizeVertical * height);
@@ -120,7 +119,8 @@ class LoginController extends GetxController {
 
   Future<void> fetchStoreDetails(String storeId, GetStorage box) async {
     try {
-      final storeUrl = Uri.parse("http://68.183.92.8:3699/api/get_store_detail?store_id=$storeId");
+      final storeUrl = Uri.parse(
+          "http://68.183.92.8:3699/api/get_store_detail?store_id=$storeId");
       final response = await http.get(storeUrl);
 
       if (response.statusCode == 200) {
@@ -148,7 +148,6 @@ class LoginController extends GetxController {
     final info = await PackageInfo.fromPlatform();
     return '1.0.4+1';
   }
-
 }
 
 // === LOGIN PAGE ===
@@ -245,55 +244,56 @@ class LoginPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 20),
                         Obx(() => TextField(
-                          controller: passwordController,
-                          obscureText: controller.obscurePassword.value,
-                          decoration: InputDecoration(
-                            labelText: "Password",
-                            prefixIcon: const Icon(Icons.lock),
-                            border: _inputBorder(),
-                            enabledBorder: _inputBorder(),
-                            focusedBorder: _focusBorder(),
-                            suffixIcon: IconButton(
-                              icon: Icon(controller.obscurePassword.value
-                                  ? Icons.visibility
-                                  : Icons.visibility_off),
-                              onPressed: () {
-                                controller.obscurePassword.value =
-                                !controller.obscurePassword.value;
-                              },
-                            ),
-                          ),
-                        )),
+                              controller: passwordController,
+                              obscureText: controller.obscurePassword.value,
+                              decoration: InputDecoration(
+                                labelText: "Password",
+                                prefixIcon: const Icon(Icons.lock),
+                                border: _inputBorder(),
+                                enabledBorder: _inputBorder(),
+                                focusedBorder: _focusBorder(),
+                                suffixIcon: IconButton(
+                                  icon: Icon(controller.obscurePassword.value
+                                      ? Icons.visibility
+                                      : Icons.visibility_off),
+                                  onPressed: () {
+                                    controller.obscurePassword.value =
+                                        !controller.obscurePassword.value;
+                                  },
+                                ),
+                              ),
+                            )),
                         CommonWidgets.verticalSpace(5),
                         Center(
                           child: Obx(() => controller.isLoading.value
                               ? const CircularProgressIndicator()
                               : CommonWidgets.button(
-                            bgColor: AppConfig.colorPrimary,
-                            textColor: AppConfig.backgroundColor,
-                            function: () {
-                              if (emailController.text.isEmpty) {
-                                CommonWidgets.showDialogueBox(
-                                    context: context,
-                                    title: 'Error',
-                                    msg: "Please enter a valid email");
-                              } else if (passwordController.text.isEmpty) {
-                                CommonWidgets.showDialogueBox(
-                                    context: context,
-                                    title: 'Error',
-                                    msg: "Please enter a valid password");
-                              } else {
-                                controller.login(
-                                  emailController.text.trim(),
-                                  passwordController.text.trim(),
-                                );
-                              }
-                            },
-                            height: SizeConfig.blockSizeVertical * 7,
-                            width: SizeConfig.blockSizeHorizontal * 67,
-                            radius: 10,
-                            title: 'Log In',
-                          )),
+                                  bgColor: AppConfig.colorPrimary,
+                                  textColor: AppConfig.backgroundColor,
+                                  function: () {
+                                    if (emailController.text.isEmpty) {
+                                      CommonWidgets.showDialogueBox(
+                                          context: context,
+                                          title: 'Error',
+                                          msg: "Please enter a valid email");
+                                    } else if (passwordController
+                                        .text.isEmpty) {
+                                      CommonWidgets.showDialogueBox(
+                                          context: context,
+                                          title: 'Error',
+                                          msg: "Please enter a valid password");
+                                    } else {
+                                      controller.login(
+                                        emailController.text.trim(),
+                                        passwordController.text.trim(),
+                                      );
+                                    }
+                                  },
+                                  height: SizeConfig.blockSizeVertical * 7,
+                                  width: SizeConfig.blockSizeHorizontal * 67,
+                                  radius: 10,
+                                  title: 'Log In',
+                                )),
                         ),
                         Center(
                           child: Padding(
@@ -301,14 +301,18 @@ class LoginPage extends StatelessWidget {
                             child: FutureBuilder<String>(
                               future: controller._getAppVersion(),
                               builder: (context, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
                                   return const SizedBox(); // You can also show a loader here
                                 } else if (snapshot.hasError) {
                                   return const Text("Error loading version");
                                 } else {
-                                  return Text(
-                                    "Version: ${snapshot.data}",
-                                    style: TextStyle(fontSize: 8.sp, color: Colors.grey, fontWeight: FontWeight.bold));                              }
+                                  return Text("Version: ${snapshot.data}",
+                                      style: TextStyle(
+                                          fontSize: 8.sp,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.bold));
+                                }
                               },
                             ),
                           ),
@@ -326,10 +330,10 @@ class LoginPage extends StatelessWidget {
   }
 
   OutlineInputBorder _inputBorder() => const OutlineInputBorder(
-    borderSide: BorderSide(color: AppConfig.colorPrimary),
-  );
+        borderSide: BorderSide(color: AppConfig.colorPrimary),
+      );
 
   OutlineInputBorder _focusBorder() => const OutlineInputBorder(
-    borderSide: BorderSide(color: AppConfig.colorPrimary, width: 2.0),
-  );
+        borderSide: BorderSide(color: AppConfig.colorPrimary, width: 2.0),
+      );
 }

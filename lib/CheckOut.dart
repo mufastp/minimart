@@ -57,7 +57,6 @@ class PaymentController extends GetxController {
     roundOffController.text = roundOff.value.toStringAsFixed(2);
   }
 
-
   void applyAutoRoundOffFromStorage() {
     final storedRoundOffStr = Details().round_off;
     debugPrint("Stored round-off value: $storedRoundOffStr");
@@ -70,8 +69,10 @@ class PaymentController extends GetxController {
     }
     final actualStep = step / 100.0;
     debugPrint("Actual step used for rounding: $actualStep");
-    final roundedAmount = (cartController.grandTotal / actualStep).round() * actualStep;
-    final diff = double.parse((roundedAmount - cartController.grandTotal).toStringAsFixed(2));
+    final roundedAmount =
+        (cartController.grandTotal / actualStep).round() * actualStep;
+    final diff = double.parse(
+        (roundedAmount - cartController.grandTotal).toStringAsFixed(2));
     roundOff.value = diff;
     roundOffController.text = diff.toStringAsFixed(2);
     updateRoundOffMessage();
@@ -80,6 +81,7 @@ class PaymentController extends GetxController {
     debugPrint('Rounded Amount: ${roundedAmount.toStringAsFixed(2)}');
     debugPrint('Difference: ${diff.toStringAsFixed(2)}');
   }
+
   void toggleAutoRoundOff(bool value) {
     isAutoRoundOff.value = value;
     if (value) {
@@ -126,15 +128,12 @@ class PaymentController extends GetxController {
   List<Map<String, dynamic>> preparePayments() {
     return paymentAmounts.entries
         .where((entry) => entry.value > 0)
-        .map((entry) =>
-    {
-      "payment_method_id": entry.key,
-      "amount": entry.value,
-    })
+        .map((entry) => {
+              "payment_method_id": entry.key,
+              "amount": entry.value,
+            })
         .toList();
   }
-
-
 
   /// Submit Checkout API
   Future<void> submitCheckout({
@@ -151,22 +150,22 @@ class PaymentController extends GetxController {
     final OrdersController ordersController = Get.put(OrdersController());
 
     // Prepare Product-wise Data
-    final List<int> productIds = cartItems.map((item) => item.productId ?? 0)
-        .toList();
-    final List<int> quantities = cartItems.map((item) => item.quantity ?? 0)
-        .toList();
-    final List<int> unitIds = cartItems.map((item) => item.unitId ?? 0)
-        .toList();
-    final List<double> mrps = cartItems.map((item) => item.price ?? 0.0)
-        .toList();
+    final List<int> productIds =
+        cartItems.map((item) => item.productId ?? 0).toList();
+    final List<int> quantities =
+        cartItems.map((item) => item.quantity ?? 0).toList();
+    final List<int> unitIds =
+        cartItems.map((item) => item.unitId ?? 0).toList();
+    final List<double> mrps =
+        cartItems.map((item) => item.price ?? 0.0).toList();
 
-    final dynamic totalTaxes = cartItems.length == 1 ? 0.0 : cartItems.map((
-        item) => 0.0).toList();
+    final dynamic totalTaxes =
+        cartItems.length == 1 ? 0.0 : cartItems.map((item) => 0.0).toList();
     final dynamic totals = cartItems.length == 1
         ? cartItems[0].total ?? 0.0
         : cartItems.map((item) => item.total ?? 0.0).toList();
-    final dynamic discounts = cartItems.length == 1 ? 0.0 : cartItems.map((
-        item) => 0.0).toList();
+    final dynamic discounts =
+        cartItems.length == 1 ? 0.0 : cartItems.map((item) => 0.0).toList();
 
     final List<Map<String, dynamic>> payments = preparePayments();
 
@@ -243,12 +242,15 @@ class CheckoutPage extends StatelessWidget {
   double get totalDiscount => cartController.totalDiscount;
   double get totalTax => cartController.totalTax;
   // double get grandTotal => cartController.grandTotal;
-  double get finalTotal => cartController.grandTotal + paymentController.roundOff.value;
+  double get finalTotal =>
+      cartController.grandTotal + paymentController.roundOff.value;
+  final String currency;
+  CheckoutPage({super.key, this.currency = ""});
 
-
-  CheckoutPage({super.key}); // Remove the argument parsing
   @override
   Widget build(BuildContext context) {
+    final String currencySymbol =
+        (Details.currency?.isNotEmpty ?? false) ? Details.currency! : currency;
     paymentController.fetchPaymentMethods();
     return Scaffold(
       backgroundColor: Colors.white,
@@ -260,7 +262,8 @@ class CheckoutPage extends StatelessWidget {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Obx(() {
-        if (customerController.isLoading.value || paymentController.isLoading.value) {
+        if (customerController.isLoading.value ||
+            paymentController.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
@@ -281,15 +284,21 @@ class CheckoutPage extends StatelessWidget {
                         children: [
                           Autocomplete<Customerss>(
                             optionsBuilder: (TextEditingValue value) {
-                              if (value.text.isEmpty) return customerController.customers;
+                              if (value.text.isEmpty)
+                                return customerController.customers;
                               return customerController.customers.where((c) =>
-                              c.name.toLowerCase().contains(value.text.toLowerCase()) ||
-                                  c.code.toLowerCase().contains(value.text.toLowerCase()));
+                                  c.name
+                                      .toLowerCase()
+                                      .contains(value.text.toLowerCase()) ||
+                                  c.code
+                                      .toLowerCase()
+                                      .contains(value.text.toLowerCase()));
                             },
                             displayStringForOption: (c) => '${c.name}',
-                            onSelected: (selected) =>
-                            customerController.selectedCustomer.value = selected,
-                            fieldViewBuilder: (context, controller, focusNode, _) {
+                            onSelected: (selected) => customerController
+                                .selectedCustomer.value = selected,
+                            fieldViewBuilder:
+                                (context, controller, focusNode, _) {
                               return TextField(
                                 controller: controller,
                                 focusNode: focusNode,
@@ -327,7 +336,8 @@ class CheckoutPage extends StatelessWidget {
                               double price = item.price * item.quantity;
                               double discount = item.discount ?? 0.0;
                               double discountedPrice = price - discount;
-                              double vat = discountedPrice * (item.tax_percentage / 100);
+                              double vat =
+                                  discountedPrice * (item.tax_percentage / 100);
                               double total = discountedPrice + vat;
 
                               return ListTile(
@@ -335,7 +345,8 @@ class CheckoutPage extends StatelessWidget {
                                 title: Text(item.productName),
                                 trailing: Text(
                                   "${item.quantity} x ${Details.currency}${item.price.toStringAsFixed(2)} = ${Details.currency}${total.toStringAsFixed(2)}",
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
                                 ),
                               );
                             },
@@ -376,7 +387,8 @@ class CheckoutPage extends StatelessWidget {
                           _buildTotalRow("Tax (6%)", totalTax),
                           _buildRoundOffField(), // Add this line
                           Divider(),
-                          _buildTotalRow("Total", finalTotal, highlight: true, bold: true),
+                          _buildTotalRow("Total", finalTotal,
+                              highlight: true, bold: true),
                         ],
                       ),
                     ),
@@ -385,7 +397,8 @@ class CheckoutPage extends StatelessWidget {
                       title: "Payment Method",
                       child: Obx(() {
                         return Column(
-                          children: paymentController.paymentMethods.map((method) {
+                          children:
+                              paymentController.paymentMethods.map((method) {
                             return _buildRadioPaymentMethod(
                               method.name,
                               _getPaymentIcon(method.type),
@@ -447,7 +460,7 @@ class CheckoutPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8.r),
               ),
               contentPadding:
-              EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
+                  EdgeInsets.symmetric(horizontal: 8.w, vertical: 10.h),
             ),
           ),
         ),
@@ -472,17 +485,20 @@ class CheckoutPage extends StatelessWidget {
 
   Widget _buildCheckoutButton() {
     return Obx(() {
-      double paid = paymentController.paymentAmounts.values.fold(0.0, (a, b) => a + b);
+      double paid =
+          paymentController.paymentAmounts.values.fold(0.0, (a, b) => a + b);
       // double total = cartController.totalAmountss;
       double total = finalTotal;
       double remaining = total - paid;
       String statusMessage;
       Color statusColor;
       if (remaining > 0) {
-        statusMessage = "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}";
+        statusMessage =
+            "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}";
         statusColor = Colors.red;
       } else if (remaining < 0) {
-        statusMessage = "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}";
+        statusMessage =
+            "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}";
         statusColor = Colors.green;
       } else {
         statusMessage = "Exact Amount Paid";
@@ -501,58 +517,62 @@ class CheckoutPage extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10.r),
               ),
             ),
-            onPressed: remaining <= 0.01 ? () async {
-              try {
-                final response = await GetConnect().get(
-                  "http://68.183.92.8:3699/api/cash-register/open/${Details.userId}",
-                );
+            onPressed: remaining <= 0.01
+                ? () async {
+                    try {
+                      final response = await GetConnect().get(
+                        "http://68.183.92.8:3699/api/cash-register/open/${Details.userId}",
+                      );
 
-                if (response.statusCode == 200 && response.body['success'] == true) {
-                  print(response.request);
-                  // box.write('key', value)
-                  print(cartController.totalDiscount);
-                  print(cartController.totalTax);
-                  await paymentController.submitCheckout(
-                    totalDiscount: cartController.totalDiscount,
-                    totalTax: cartController.totalTax,
-                    customerId: customerController.selectedCustomer.value?.id ?? 0,
-                    remarks: 'Delivered successfully',
-                    cartItems: cartController.cartItems,
-                    totalAmount: cartController.totalAmountss,
-                    grandTotal: finalTotal,
-                    roundOff: paymentController.roundOff.value,
-                  );
-                } else {
-                  Get.dialog(
-                    AlertDialog(
-                      title: const Text("Cashier Closed"),
-                      content: const Text(
-                        "Please open the cashier section before processing the payment.",
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Get.back(),
-                          child: const Text("OK"),
+                      if (response.statusCode == 200 &&
+                          response.body['success'] == true) {
+                        print(response.request);
+                        // box.write('key', value)
+                        print(cartController.totalDiscount);
+                        print(cartController.totalTax);
+                        await paymentController.submitCheckout(
+                          totalDiscount: cartController.totalDiscount,
+                          totalTax: cartController.totalTax,
+                          customerId:
+                              customerController.selectedCustomer.value?.id ??
+                                  0,
+                          remarks: 'Delivered successfully',
+                          cartItems: cartController.cartItems,
+                          totalAmount: cartController.totalAmountss,
+                          grandTotal: finalTotal,
+                          roundOff: paymentController.roundOff.value,
+                        );
+                      } else {
+                        Get.dialog(
+                          AlertDialog(
+                            title: const Text("Cashier Closed"),
+                            content: const Text(
+                              "Please open the cashier section before processing the payment.",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Get.back(),
+                                child: const Text("OK"),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      Get.dialog(
+                        AlertDialog(
+                          title: const Text("Network Error"),
+                          content: Text("Something went wrong: $e"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(),
+                              child: const Text("OK"),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }
-              } catch (e) {
-                Get.dialog(
-                  AlertDialog(
-                    title: const Text("Network Error"),
-                    content: Text("Something went wrong: $e"),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Get.back(),
-                        child: const Text("OK"),
-                      ),
-                    ],
-                  ),
-                );
-              }
-            }
+                      );
+                    }
+                  }
                 : null,
             icon: const Icon(Icons.check, color: Colors.white),
             label: Text(
@@ -634,11 +654,13 @@ class CheckoutPage extends StatelessWidget {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                 ),
                 onChanged: (value) {
                   if (value.isNotEmpty) {
-                    paymentController.roundOff.value = double.tryParse(value) ?? 0.0;
+                    paymentController.roundOff.value =
+                        double.tryParse(value) ?? 0.0;
                   }
                 },
               );

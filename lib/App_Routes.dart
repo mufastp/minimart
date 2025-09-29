@@ -6,6 +6,7 @@ import 'package:minimart/Login.dart';
 import 'DashBoard.dart';
 import 'Home.dart';
 import 'ProductSearch.dart';
+import 'NewWindowPage.dart';
 
 class AppRoutes {
   static const String initial = '/';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String home = '/home';
   static const String productSearch = '/productsearch';
   static const String checkOut = '/checkout';
+  static const String newWindow = '/newwindow';
 
   static final routes = [
     GetPage(name: login, page: () => LoginPage()),
@@ -33,6 +35,10 @@ class AppRoutes {
       name: checkOut,
       page: () => CheckoutPage(),
       transition: Transition.rightToLeft, // optional
+    ),
+    GetPage(
+      name: newWindow,
+      page: () => NewWindowPage(),
     ),
     // Add other routes as needed
   ];

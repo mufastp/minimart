@@ -44,6 +44,11 @@ dependencies:
   esc_pos_printer: ^4.0.3
   esc_pos_utils: ^1.1.0
   package_info_plus:
+  desktop_multi_window: ^0.2.1
+  window_manager: ^0.5.1
+ 
+
+
 
 dev_dependencies:
   flutter_test:
