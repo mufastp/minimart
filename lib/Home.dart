@@ -193,9 +193,10 @@ class HomePage extends StatelessWidget {
                           "totalDiscount": cartController.totalDiscount,
                           "totalTax": cartController.totalTax,
                           "grandTotal": cartController.grandTotal,
+                          "currency": Details.currency
                         };
                         Get.toNamed('/checkout', id: 1, arguments: args);
-                        gotoCheckout(arguments: jsonEncode(args));
+                     gotoCheckout(arguments: jsonEncode(args));
                       },
                       child: Text(
                         'Checkout (${Details.currency}${cartController.grandTotal.toStringAsFixed(2)})',

@@ -1,7 +1,9 @@
+import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:minimart/main.dart';
 import 'Customers.dart';
 import 'Details.dart';
 import 'ProductSearch.dart';
@@ -219,7 +221,8 @@ class PaymentController extends GetxController {
             await ordersController.printOrder(orderId);
           },
           onCancel: () {
-            Get.back(); // Close the dialog
+            Get.back(); 
+         sendCartToSecondWindow();
             Get.offNamed('/home', id: 1); // Navigate to home
           },
         );
@@ -232,6 +235,19 @@ class PaymentController extends GetxController {
     }
   }
 }
+ void sendCartToSecondWindow({bool needOpen = false}) async {
+    if (windowId != null) {
+      final items = [];
+      DesktopMultiWindow.invokeMethod(
+          windowId!, "update_cart", jsonEncode(items));
+    } else {
+      if (needOpen) {
+        openNewWindow();
+        await Future.delayed(const Duration(seconds: 1));
+        sendCartToSecondWindow();
+      }
+    }
+  }
 
 class CheckoutPage extends StatelessWidget {
   final CartController cartController = Get.find<CartController>();
@@ -420,6 +436,19 @@ class CheckoutPage extends StatelessWidget {
     );
   }
 
+  void gotoCheckout({
+    bool needOpen = false,
+    String arguments = '',
+  }) async {
+    if (windowId != null) {
+      DesktopMultiWindow.invokeMethod(
+        windowId!,
+        "go_to_checkout",
+        arguments,
+      );
+    } else {}
+  }
+
   Widget _buildSectionCard({required String title, required Widget child}) {
     return Card(
       elevation: 2,
@@ -495,13 +524,35 @@ class CheckoutPage extends StatelessWidget {
       if (remaining > 0) {
         statusMessage =
             "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}";
+        final args = {
+          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
+          "statusMessage":
+              "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}",
+          "total": total,
+        };
+        gotoCheckout(arguments: jsonEncode(args));
         statusColor = Colors.red;
       } else if (remaining < 0) {
         statusMessage =
             "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}";
+        final args = {
+          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
+          "statusMessage":
+              "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}",
+          "total": total,
+        };
         statusColor = Colors.green;
+          gotoCheckout(arguments: jsonEncode(args));
       } else {
         statusMessage = "Exact Amount Paid";
+         final args = {
+          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
+          "statusMessage":
+            "Exact Amount Paid",
+          "total": total,
+        };
+    
+          gotoCheckout(arguments: jsonEncode(args));
         statusColor = Colors.blue;
       }
 

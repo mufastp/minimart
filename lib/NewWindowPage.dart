@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:minimart/ProductSearch.dart';
 import 'SelectedProductsWidget.dart';
 
@@ -14,27 +15,34 @@ class NewWindowPage extends StatefulWidget {
 class _NewWindowPageState extends State<NewWindowPage> {
   final cartController = Get.put(CartController());
   String? currencySymbol;
+  bool checkout = false;
+        String? statusMessage;
   @override
   void initState() {
     super.initState();
 
     DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
       if (call.method == "update_cart") {
+        checkout=false;
         final List<dynamic> data = jsonDecode(call.arguments);
         cartController.cartItems.value =
             data.map((e) => CartItem.fromJson(e)).toList();
+        setState(() {});
       } else if (call.method == "set_currency") {
         log(call.arguments);
         currencySymbol = call.arguments;
         setState(() {});
+      } else if (call.method == "go_to_checkout") {
+        checkout = true;
+        setState(() {});
+        Map<String, dynamic> args =
+            Map<String, dynamic>.from(jsonDecode(call.arguments));
+
+        currencySymbol = args["currency"];
+        statusMessage=args['statusMessage'];
+
+        // Get.toNamed('/checkout', arguments: args);
       }
-//    else if (call.method == "go_to_checkout") {
-//    Map<String, dynamic> args = Map<String, dynamic>.from(jsonDecode(call.arguments));
-// args["currency"] = currencySymbol;
-
-// Get.toNamed('/checkout', arguments: args);
-
-//   }
       return null;
     });
   }
@@ -65,8 +73,9 @@ class _NewWindowPageState extends State<NewWindowPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    checkout == true ? Text(statusMessage??"") : SizedBox(),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
