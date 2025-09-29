@@ -178,7 +178,6 @@ class CartController extends GetxController {
           item.productId == product.productId &&
           item.unitName == product.unitName,
     );
-
     if (existingItem != null) {
       existingItem.quantity++;
     } else {
