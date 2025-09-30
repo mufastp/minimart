@@ -8,7 +8,6 @@ import 'package:get_storage/get_storage.dart';
 
 import 'App_Routes.dart';
 import 'DependencyInjection.dart';
-
 int? windowId; // To hold the window ID for sub-windows
 void main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,22 +42,22 @@ void main(List<String> args) async {
   ));
 }
 
-Future<void> openNewWindow() async {
-  try {
-    final window = await DesktopMultiWindow.createWindow(
-      jsonEncode({"title": "Selected Products", "route": "/newwindow"}),
-    );
-    window
-      ..setFrame(const Offset(200, 200) & const Size(800, 1280))
-      ..setTitle("Selected Products - New Window")
-      ..show();
-    windowId = window.windowId;
+  Future<void> openNewWindow() async {
+    try {
+      final window = await DesktopMultiWindow.createWindow(
+        jsonEncode({"title": "Selected Products", "route": "/newwindow"}),
+      );
+      window
+        ..setFrame(const Offset(200, 200) & const Size(800, 1280))
+        ..setTitle("Selected Products - New Window")
+        ..show();
+        windowId=window.windowId;
 
-    print("Auto-opened new window successfully");
-  } catch (e) {
-    print("Error auto-opening new window: $e");
+      print("Auto-opened new window successfully");
+    } catch (e) {
+      print("Error auto-opening new window: $e");
+    }
   }
-}
 
 class MyApp extends StatefulWidget {
   final String initialRoute;

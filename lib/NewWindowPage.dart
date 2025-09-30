@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
+import 'package:minimart/CheckOut.dart';
+import 'package:minimart/Details.dart';
 import 'package:minimart/ProductSearch.dart';
 import 'SelectedProductsWidget.dart';
 
@@ -14,41 +16,67 @@ class NewWindowPage extends StatefulWidget {
 
 class _NewWindowPageState extends State<NewWindowPage> {
   final cartController = Get.put(CartController());
+  final paymentController = Get.put(PaymentController());
+
+  List<PaymentMethodAmountMapper> mapper = [];
+  double get paidAmount => mapper.fold(
+        0,
+        (previousValue, element) => previousValue + element.amount,
+      );
+  double get remaining => cartController.grandTotal - paidAmount;
+
   String? currencySymbol;
-  bool checkout = false;
-        String? statusMessage;
   @override
   void initState() {
     super.initState();
 
     DesktopMultiWindow.setMethodHandler((call, fromWindowId) async {
       if (call.method == "update_cart") {
-        checkout=false;
         final List<dynamic> data = jsonDecode(call.arguments);
         cartController.cartItems.value =
             data.map((e) => CartItem.fromJson(e)).toList();
-        setState(() {});
       } else if (call.method == "set_currency") {
         log(call.arguments);
         currencySymbol = call.arguments;
         setState(() {});
-      } else if (call.method == "go_to_checkout") {
-        checkout = true;
+      } else if (call.method == "confirm_checkout") {
+        final List<dynamic> data = jsonDecode(call.arguments);
+        List<PaymentMethodAmountMapper> payments =
+            data.map((e) => PaymentMethodAmountMapper.fromJson(e)).toList();
+        mapper = payments;
         setState(() {});
-        Map<String, dynamic> args =
-            Map<String, dynamic>.from(jsonDecode(call.arguments));
-
-        currencySymbol = args["currency"];
-        statusMessage=args['statusMessage'];
-
-        // Get.toNamed('/checkout', arguments: args);
       }
+//    else if (call.method == "go_to_checkout") {
+//    Map<String, dynamic> args = Map<String, dynamic>.from(jsonDecode(call.arguments));
+// args["currency"] = currencySymbol;
+
+// Get.toNamed('/checkout', arguments: args);
+
+//   }
       return null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+  final String? currency = (Details.currency?.isNotEmpty ?? false)
+        ? Details.currency!
+        : currencySymbol;
+    String statusMessage;
+    Color statusColor;
+    if (remaining > 0) {
+      statusMessage =
+          "Remaining: $currency${remaining.toStringAsFixed(2)}";
+      statusColor = Colors.red;
+    } else if (remaining < 0) {
+      statusMessage =
+          "Cash Change: $currency${remaining.abs().toStringAsFixed(2)}";
+      statusColor = Colors.green;
+    } else {
+      statusMessage = "Exact Amount Paid";
+      statusColor = Colors.blue;
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -66,7 +94,7 @@ class _NewWindowPageState extends State<NewWindowPage> {
               Expanded(
                 child: SelectedProductsWidget(
                   cartController: cartController,
-                  currencySymbol: currencySymbol ?? "",
+                  currencySymbol: currency ?? "",
                   newwindow: true,
                 ),
               ),
@@ -75,18 +103,43 @@ class _NewWindowPageState extends State<NewWindowPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    checkout == true ? Text(statusMessage??"") : SizedBox(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+                        if(mapper.isNotEmpty)...[
+                         ... List.generate(mapper.length,(index) => Text(
+                          "${mapper[index].name}-$currency ${mapper[index].amount}",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black,
+                          ),
+                        ), ),
+                          
+                           Text(
+                          statusMessage,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w500,
+                            color: statusColor,
+                          ),
+                        )
+                        ]
+                       
+                      ],
+                    ),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                             "Sub Total: (${cartController.cartItems.length} Item${cartController.cartItems.length > 1 ? 's' : ''})"),
                         Text(
-                            "Total Discount: $currencySymbol${cartController.totalDiscount.toStringAsFixed(2)}"),
+                            "Total Discount: $currency${cartController.totalDiscount.toStringAsFixed(2)}"),
                         Text(
-                            "VAT: $currencySymbol${cartController.totalTax.toStringAsFixed(2)}"),
+                            "VAT: $currency${cartController.totalTax.toStringAsFixed(2)}"),
                         Text(
-                            "Total: $currencySymbol${cartController.grandTotal.toStringAsFixed(2)}",
+                            "Total: $currency${cartController.grandTotal.toStringAsFixed(2)}",
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                       ],

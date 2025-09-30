@@ -12,6 +12,7 @@ class SelectedProductsWidget extends StatelessWidget {
 
   const SelectedProductsWidget({
     Key? key,
+    
     required this.cartController,
     required this.currencySymbol,
     required this.newwindow,
@@ -103,7 +104,7 @@ class SelectedProductsWidget extends StatelessWidget {
     double total = discountedPrice + vat;
 
     final barcode = item.barcode;
-    final String currency = (Details.currency?.isNotEmpty ?? false)
+final String currency = (Details.currency?.isNotEmpty ?? false)
         ? Details.currency!
         : currencySymbol;
 

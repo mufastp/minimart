@@ -13,10 +13,7 @@ class ProductSearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Search Product',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: Text('Search Product',style: TextStyle(color: Colors.white),),
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurpleAccent,
         centerTitle: true,
@@ -53,10 +50,9 @@ class ProductSearchPage extends StatelessWidget {
                   return ListTile(
                     leading: Icon(Icons.shopping_bag),
                     title: Text(product.productName),
-                    subtitle: Text(
-                        '${Details.currency}${product.price} - ${product.unitName}'),
+                    subtitle: Text('${Details.currency}${product.price} - ${product.unitName}'),
                     onTap: () {
-                      Get.back(id: 1, result: product);
+                      Get.back(id: 1,result: product);
                     },
                   );
                 },
@@ -68,7 +64,6 @@ class ProductSearchPage extends StatelessWidget {
     );
   }
 }
-
 class CartItem {
   final int productId;
   final String productName;
@@ -141,6 +136,8 @@ class CartItem {
   }
 }
 
+
+
 class CartController extends GetxController {
   final RxList<CartItem> cartItems = <CartItem>[].obs;
 
@@ -151,6 +148,7 @@ class CartController extends GetxController {
   final roundOffController = TextEditingController();
   RxString roundOffMessage = ''.obs;
   RxBool isAutoRoundOff = true.obs;
+
 
   @override
   void onInit() {
@@ -174,10 +172,9 @@ class CartController extends GetxController {
 
   void addToCart(Product product) {
     final existingItem = cartItems.firstWhereOrNull(
-      (item) =>
-          item.productId == product.productId &&
-          item.unitName == product.unitName,
+          (item) => item.productId == product.productId && item.unitName == product.unitName,
     );
+
     if (existingItem != null) {
       existingItem.quantity++;
     } else {
@@ -189,47 +186,45 @@ class CartController extends GetxController {
         price: product.price,
         unitId: product.unitId,
         tax_percentage: product.tax_percentage,
-        rateChangeAllowed: product.rateChangeAllowed,
-        originalPrice: product.price,
+        rateChangeAllowed: product.rateChangeAllowed, originalPrice: product.price,
       ));
     }
-
+    
     cartItems.refresh();
     sendCartToSecondWindow(needOpen: true);
+   
   }
-
-  void sendCartToSecondWindow({bool needOpen = false}) async {
-    if (windowId != null) {
-      final items = cartItems.map((e) => e.toJson()).toList();
-      DesktopMultiWindow.invokeMethod(
-          windowId!, "update_cart", jsonEncode(items));
-    } else {
-      if (needOpen) {
-        openNewWindow();
-        await Future.delayed(const Duration(seconds: 1));
-        sendCartToSecondWindow();
-      }
+ void sendCartToSecondWindow({bool needOpen=false}) async{
+  if (windowId != null) {
+    final items = cartItems.map((e) => e.toJson()).toList();
+    DesktopMultiWindow.invokeMethod(windowId!,"update_cart", jsonEncode(items));
+  }else{
+    if(needOpen){
+       openNewWindow();
+    await Future.delayed(const Duration(seconds: 1));
+    sendCartToSecondWindow();
     }
+   
   }
-
-  void updatePrice(CartItem item, double newPrice,
-      {bool updateControllerText = true}) {
+}
+  void updatePrice(CartItem item, double newPrice, {bool updateControllerText = true}) {
     item.price = newPrice;
     if (updateControllerText) {
       item.priceController.text = newPrice.toStringAsFixed(2);
     }
     update(); // refresh UI
     sendCartToSecondWindow();
+
   }
 
-  void updateDiscount(CartItem item, double discount,
-      {bool updateControllerText = true}) {
+  void updateDiscount(CartItem item, double discount, {bool updateControllerText = true}) {
     item.discount = discount;
     if (updateControllerText) {
       item.discountController.text = discount.toStringAsFixed(1);
     }
     update(); // refresh UI
     sendCartToSecondWindow();
+
   }
 
   void applyAutoRoundOffFromStorage() {
@@ -254,7 +249,6 @@ class CartController extends GetxController {
     debugPrint('Rounded Amount: ${roundedAmount.toStringAsFixed(2)}');
     debugPrint('Difference: ${diff.toStringAsFixed(2)}');
   }
-
   void toggleAutoRoundOff(bool value) {
     isAutoRoundOff.value = value;
     if (value) {
@@ -264,6 +258,7 @@ class CartController extends GetxController {
       roundOffController.text = roundOff.value.toStringAsFixed(2);
     }
     sendCartToSecondWindow();
+
   }
 
   void updateRoundOffMessage() {
@@ -274,17 +269,20 @@ class CartController extends GetxController {
         ? 'Auto Round-off: ${roundOff.value.toStringAsFixed(2)} (Nearest ${actualStep.toStringAsFixed(2)})'
         : 'Manual Round-off: ${roundOff.value.toStringAsFixed(2)}';
     sendCartToSecondWindow();
+
   }
 
   void removeFromCart(CartItem item) {
     cartItems.remove(item);
     sendCartToSecondWindow();
+
   }
 
   void increaseQuantity(CartItem item) {
     item.quantity++;
     cartItems.refresh();
     sendCartToSecondWindow();
+
   }
 
   void decreaseQuantity(CartItem item) {
@@ -295,21 +293,23 @@ class CartController extends GetxController {
       removeFromCart(item);
     }
     sendCartToSecondWindow();
+
   }
 
+
   double get totalAmountss => cartItems.fold(
-        0,
+    0,
         (sum, item) {
-          double itemTotal = item.price * item.quantity;
-          double discount = item.discount ?? 0.0;
-          double discountedPrice = itemTotal - discount;
+      double itemTotal = item.price * item.quantity;
+      double discount = item.discount ?? 0.0;
+      double discountedPrice = itemTotal - discount;
 
-          // Use the dynamic tax percentage instead of fixed 6%
-          double vat = discountedPrice * (item.tax_percentage / 100);
+      // Use the dynamic tax percentage instead of fixed 6%
+      double vat = discountedPrice * (item.tax_percentage / 100);
 
-          return sum + discountedPrice + vat;
-        },
-      );
+      return sum + discountedPrice + vat;
+    },
+  );
 
   double get totalPayment =>
       cardPayment.value + cashPayment.value + mobilePayment.value;
@@ -320,15 +320,13 @@ class CartController extends GetxController {
     roundOff.value = value;
     roundOffController.text = value.toStringAsFixed(2);
   }
-
 // In your CartController class, add these computed values
   double get subtotal => cartItems.fold(0, (sum, item) {
-        double itemTotal = item.price * item.quantity;
-        double discount = item.discount ?? 0.0;
-        return sum + (itemTotal - discount);
-      });
-  double get totalDiscount =>
-      cartItems.fold(0, (sum, item) => sum + (item.discount ?? 0.0));
+    double itemTotal = item.price * item.quantity;
+    double discount = item.discount ?? 0.0;
+    return sum + (itemTotal - discount);
+  });
+  double get totalDiscount => cartItems.fold(0, (sum, item) => sum + (item.discount ?? 0.0));
   double get totalTax {
     double totalTax = 0;
 
@@ -349,7 +347,6 @@ class CartController extends GetxController {
     // Round the final total to avoid floating point errors
     return double.parse(totalTax.toStringAsFixed(2));
   }
-
   double get grandTotal {
     return subtotal + totalTax + roundOff.value;
   }
@@ -365,6 +362,7 @@ class CartController extends GetxController {
     roundOff.value = 0.0;
   }
 }
+
 
 class Product {
   final int productId;
@@ -389,6 +387,7 @@ class Product {
     required this.rateChangeAllowed, // Add this to constructor
   });
 }
+
 
 class ProductRepository {
   final String baseUrl = 'http://68.183.92.8:3699/api/product-search';
@@ -442,9 +441,7 @@ class ProductRepository {
         }
 
         // Case 3: Response is a map but not barcode type
-        else if (decoded is Map &&
-            decoded.containsKey('data') &&
-            decoded['data'] is Map) {
+        else if (decoded is Map && decoded.containsKey('data') && decoded['data'] is Map) {
           final data = decoded['data'];
           return [
             Product(
@@ -462,16 +459,17 @@ class ProductRepository {
         }
 
         return [];
-      } else if (response.statusCode == 404) {
+      }
+      else if (response.statusCode == 404) {
         final decoded = json.decode(response.body);
         if (decoded['message'] == "No results found") {
           throw Exception("No results found");
         } else {
           throw Exception("Unexpected error: ${decoded['message']}");
         }
-      } else {
-        throw Exception(
-            "Failed to load products. Status code: ${response.statusCode}");
+      }
+      else {
+        throw Exception("Failed to load products. Status code: ${response.statusCode}");
       }
     } catch (e) {
       print('Error in searchProducts: $e');
@@ -502,6 +500,8 @@ class ProductRepository {
   }
 }
 
+
+
 class ProductSearchController extends GetxController {
   final searchController = TextEditingController();
   final products = <Product>[].obs;
@@ -514,31 +514,28 @@ class ProductSearchController extends GetxController {
     super.onInit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(milliseconds: 150), () {
-        if (searchFocusNode.context != null &&
-            searchFocusNode.context!.mounted) {
+        if (searchFocusNode.context != null && searchFocusNode.context!.mounted) {
           searchFocusNode.requestFocus();
         }
       });
     });
     setCurrencyOnSecondWindow();
   }
-
-  void setCurrencyOnSecondWindow() async {
-    if (windowId != null) {
-      DesktopMultiWindow.invokeMethod(
-          windowId!, "set_currency", Details.currency ?? "");
-    } else {
-      // openNewWindow();
-      // await Future.delayed(const Duration(seconds: 1));
-      setCurrencyOnSecondWindow();
-    }
+void setCurrencyOnSecondWindow() async{
+  if (windowId != null) {
+   
+    DesktopMultiWindow.invokeMethod(windowId!,"set_currency", Details.currency??"");
+  }else{
+    // openNewWindow();
+    // await Future.delayed(const Duration(seconds: 1));
+    setCurrencyOnSecondWindow();
   }
-
+}
   Future<void> searchProducts(
-    String query, {
-    bool isScanned = false,
-    FocusNode? searchFocusNode,
-  }) async {
+      String query, {
+        bool isScanned = false,
+        FocusNode? searchFocusNode,
+      }) async {
     query = query.trim().replaceAll('\n', '').replaceAll('\r', '');
 
     if (query.isEmpty) {
@@ -570,12 +567,12 @@ class ProductSearchController extends GetxController {
         searchController.clear();
         products.clear();
         Future.delayed(const Duration(milliseconds: 150), () {
-          if (searchFocusNode?.context != null &&
-              searchFocusNode!.context!.mounted) {
+          if (searchFocusNode?.context != null && searchFocusNode!.context!.mounted) {
             searchFocusNode.requestFocus();
           }
         });
       }
+
     } catch (e) {
       print('Error in search: $e');
       products.clear();
@@ -592,3 +589,5 @@ class ProductSearchController extends GetxController {
     super.onClose();
   }
 }
+
+

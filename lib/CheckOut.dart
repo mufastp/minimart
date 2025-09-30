@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -28,15 +30,71 @@ class PaymentMethod {
   }
 }
 
+class PaymentMethodAmountMapper {
+  final int id;
+  final String name;
+  final double amount;
+
+  PaymentMethodAmountMapper({
+    required this.id,
+    required this.name,
+    required this.amount,
+  });
+
+  // Convert JSON → Object
+  factory PaymentMethodAmountMapper.fromJson(Map<String, dynamic> json) {
+    return PaymentMethodAmountMapper(
+      id: json['id'] is String
+          ? int.tryParse(json['id']) ?? 0
+          : json['id'] ?? 0,
+      name: json['name'] ?? '',
+      amount: (json['amount'] is int)
+          ? (json['amount'] as int).toDouble()
+          : (json['amount'] ?? 0.0).toDouble(),
+    );
+  }
+
+  // Convert Object → JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'amount': amount,
+    };
+  }
+}
+
 class PaymentController extends GetxController {
   var paymentMethods = <PaymentMethod>[].obs;
   var paymentAmounts = <int, double>{}.obs;
+
   var isLoading = true.obs;
   var roundOff = 0.0.obs;
   final roundOffController = TextEditingController();
   RxString roundOffMessage = ''.obs;
   RxBool isAutoRoundOff = true.obs;
   final CartController cartController = Get.find<CartController>();
+  sendPaymentMetodsandAmount() {
+    final List<PaymentMethodAmountMapper> mapper = paymentAmounts.entries
+        .where((entry) => entry.value > 0) // keep only amounts > 0
+        .map((entry) {
+      final method = paymentMethods.firstWhere(
+        (p0) => p0.id == entry.key,
+        orElse: () =>
+            PaymentMethod(id: entry.key, name: 'Unknown', type: "Unknown"),
+      );
+      return PaymentMethodAmountMapper(
+        id: entry.key,
+        name: method.name,
+        amount: entry.value,
+      );
+    }).toList();
+    if (windowId != null) {
+      final items = mapper.map((e) => e.toJson()).toList();
+      DesktopMultiWindow.invokeMethod(
+          windowId!, "confirm_checkout", jsonEncode(items));
+    }
+  }
 
   @override
   void onInit() {
@@ -222,7 +280,7 @@ class PaymentController extends GetxController {
           },
           onCancel: () {
             Get.back(); 
-         sendCartToSecondWindow();
+            sendCartToSecondWindow();// Close the dialog
             Get.offNamed('/home', id: 1); // Navigate to home
           },
         );
@@ -291,99 +349,102 @@ class CheckoutPage extends StatelessWidget {
               /// LEFT PANEL
               Expanded(
                 flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionCard(
-                      title: "Customer Information",
-                      child: Column(
-                        children: [
-                          Autocomplete<Customerss>(
-                            optionsBuilder: (TextEditingValue value) {
-                              if (value.text.isEmpty)
-                                return customerController.customers;
-                              return customerController.customers.where((c) =>
-                                  c.name
-                                      .toLowerCase()
-                                      .contains(value.text.toLowerCase()) ||
-                                  c.code
-                                      .toLowerCase()
-                                      .contains(value.text.toLowerCase()));
-                            },
-                            displayStringForOption: (c) => '${c.name}',
-                            onSelected: (selected) => customerController
-                                .selectedCustomer.value = selected,
-                            fieldViewBuilder:
-                                (context, controller, focusNode, _) {
-                              return TextField(
-                                controller: controller,
-                                focusNode: focusNode,
-                                decoration: InputDecoration(
-                                  hintText: 'Select customer',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.r),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionCard(
+                        title: "Customer Information",
+                        child: Column(
+                          children: [
+                            Autocomplete<Customerss>(
+                              optionsBuilder: (TextEditingValue value) {
+                                if (value.text.isEmpty)
+                                  return customerController.customers;
+                                return customerController.customers.where((c) =>
+                                    c.name
+                                        .toLowerCase()
+                                        .contains(value.text.toLowerCase()) ||
+                                    c.code
+                                        .toLowerCase()
+                                        .contains(value.text.toLowerCase()));
+                              },
+                              displayStringForOption: (c) => '${c.name}',
+                              onSelected: (selected) => customerController
+                                  .selectedCustomer.value = selected,
+                              fieldViewBuilder:
+                                  (context, controller, focusNode, _) {
+                                return TextField(
+                                  controller: controller,
+                                  focusNode: focusNode,
+                                  decoration: InputDecoration(
+                                    hintText: 'Select customer',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 16.w, vertical: 14.h),
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 16.w, vertical: 14.h),
-                                ),
-                              );
-                            },
-                          ),
-                          SizedBox(height: 8.h),
-                          _buildTextField("Full Name"),
-                          SizedBox(height: 8.h),
-                          _buildTextField("Phone Number"),
-                          SizedBox(height: 8.h),
-                          _buildTextField("Loyalty Card Number (Optional)"),
-                        ],
+                                );
+                              },
+                            ),
+                            SizedBox(height: 8.h),
+                            _buildTextField("Full Name"),
+                            SizedBox(height: 8.h),
+                            _buildTextField("Phone Number"),
+                            SizedBox(height: 8.h),
+                            _buildTextField("Loyalty Card Number (Optional)"),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildSectionCard(
-                      title: "Order Items (${cartController.cartItems.length})",
-                      child: SizedBox(
-                        height: 160.h,
-                        child: Scrollbar(
-                          child: ListView.builder(
-                            itemCount: cartController.cartItems.length,
-                            itemBuilder: (context, index) {
-                              final item = cartController.cartItems[index];
-                              // FIXED: Calculate correct total with discount and tax
-                              double price = item.price * item.quantity;
-                              double discount = item.discount ?? 0.0;
-                              double discountedPrice = price - discount;
-                              double vat =
-                                  discountedPrice * (item.tax_percentage / 100);
-                              double total = discountedPrice + vat;
+                      SizedBox(height: 8.h),
+                      _buildSectionCard(
+                        title:
+                            "Order Items (${cartController.cartItems.length})",
+                        child: SizedBox(
+                          height: 160.h,
+                          child: Scrollbar(
+                            child: ListView.builder(
+                              itemCount: cartController.cartItems.length,
+                              itemBuilder: (context, index) {
+                                final item = cartController.cartItems[index];
+                                // FIXED: Calculate correct total with discount and tax
+                                double price = item.price * item.quantity;
+                                double discount = item.discount ?? 0.0;
+                                double discountedPrice = price - discount;
+                                double vat = discountedPrice *
+                                    (item.tax_percentage / 100);
+                                double total = discountedPrice + vat;
 
-                              return ListTile(
-                                dense: true,
-                                title: Text(item.productName),
-                                trailing: Text(
-                                  "${item.quantity} x ${Details.currency}${item.price.toStringAsFixed(2)} = ${Details.currency}${total.toStringAsFixed(2)}",
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              );
-                            },
+                                return ListTile(
+                                  dense: true,
+                                  title: Text(item.productName),
+                                  trailing: Text(
+                                    "${item.quantity} x ${Details.currency}${item.price.toStringAsFixed(2)} = ${Details.currency}${total.toStringAsFixed(2)}",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 8.h),
-                    _buildSectionCard(
-                      title: "Order Notes (Optional)",
-                      child: TextField(
-                        maxLines: 3,
-                        decoration: InputDecoration(
-                          hintText: 'Add any special notes...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.r),
+                      SizedBox(height: 8.h),
+                      _buildSectionCard(
+                        title: "Order Notes (Optional)",
+                        child: TextField(
+                          maxLines: 3,
+                          decoration: InputDecoration(
+                            hintText: 'Add any special notes...',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.r),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
@@ -392,41 +453,43 @@ class CheckoutPage extends StatelessWidget {
               /// RIGHT PANEL
               Expanded(
                 flex: 1,
-                child: Column(
-                  children: [
-                    _buildSectionCard(
-                      title: "Order Total",
-                      child: Column(
-                        children: [
-                          _buildTotalRow("Subtotal", subtotal),
-                          _buildTotalRow("Discount", -totalDiscount),
-                          _buildTotalRow("Tax (6%)", totalTax),
-                          _buildRoundOffField(), // Add this line
-                          Divider(),
-                          _buildTotalRow("Total", finalTotal,
-                              highlight: true, bold: true),
-                        ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildSectionCard(
+                        title: "Order Total",
+                        child: Column(
+                          children: [
+                            _buildTotalRow("Subtotal", subtotal),
+                            _buildTotalRow("Discount", -totalDiscount),
+                            _buildTotalRow("Tax (6%)", totalTax),
+                            _buildRoundOffField(), // Add this line
+                            Divider(),
+                            _buildTotalRow("Total", finalTotal,
+                                highlight: true, bold: true),
+                          ],
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 16.h),
-                    _buildSectionCard(
-                      title: "Payment Method",
-                      child: Obx(() {
-                        return Column(
-                          children:
-                              paymentController.paymentMethods.map((method) {
-                            return _buildRadioPaymentMethod(
-                              method.name,
-                              _getPaymentIcon(method.type),
-                              method.id,
-                            );
-                          }).toList(),
-                        );
-                      }),
-                    ),
-                    SizedBox(height: 24.h),
-                    _buildCheckoutButton(),
-                  ],
+                      SizedBox(height: 16.h),
+                      _buildSectionCard(
+                        title: "Payment Method",
+                        child: Obx(() {
+                          return Column(
+                            children:
+                                paymentController.paymentMethods.map((method) {
+                              return _buildRadioPaymentMethod(
+                                method.name,
+                                _getPaymentIcon(method.type),
+                                method.id,
+                              );
+                            }).toList(),
+                          );
+                        }),
+                      ),
+                      SizedBox(height: 24.h),
+                      _buildCheckoutButton(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -434,19 +497,6 @@ class CheckoutPage extends StatelessWidget {
         );
       }),
     );
-  }
-
-  void gotoCheckout({
-    bool needOpen = false,
-    String arguments = '',
-  }) async {
-    if (windowId != null) {
-      DesktopMultiWindow.invokeMethod(
-        windowId!,
-        "go_to_checkout",
-        arguments,
-      );
-    } else {}
   }
 
   Widget _buildSectionCard({required String title, required Widget child}) {
@@ -524,35 +574,13 @@ class CheckoutPage extends StatelessWidget {
       if (remaining > 0) {
         statusMessage =
             "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}";
-        final args = {
-          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
-          "statusMessage":
-              "Remaining: ${Details.currency}${remaining.toStringAsFixed(2)}",
-          "total": total,
-        };
-        gotoCheckout(arguments: jsonEncode(args));
         statusColor = Colors.red;
       } else if (remaining < 0) {
         statusMessage =
             "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}";
-        final args = {
-          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
-          "statusMessage":
-              "Cash Change: ${Details.currency}${remaining.abs().toStringAsFixed(2)}",
-          "total": total,
-        };
         statusColor = Colors.green;
-          gotoCheckout(arguments: jsonEncode(args));
       } else {
         statusMessage = "Exact Amount Paid";
-         final args = {
-          "cartItems": cartController.cartItems.map((e) => e.toJson()).toList(),
-          "statusMessage":
-            "Exact Amount Paid",
-          "total": total,
-        };
-    
-          gotoCheckout(arguments: jsonEncode(args));
         statusColor = Colors.blue;
       }
 
@@ -570,6 +598,8 @@ class CheckoutPage extends StatelessWidget {
             ),
             onPressed: remaining <= 0.01
                 ? () async {
+                    (paymentController.sendPaymentMetodsandAmount());
+
                     try {
                       final response = await GetConnect().get(
                         "http://68.183.92.8:3699/api/cash-register/open/${Details.userId}",

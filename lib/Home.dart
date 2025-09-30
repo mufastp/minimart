@@ -4,7 +4,6 @@ import 'package:desktop_multi_window/desktop_multi_window.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart';
 import 'package:minimart/Details.dart';
 import 'package:minimart/main.dart';
 import 'ProductSearch.dart';
@@ -109,7 +108,7 @@ class HomePage extends StatelessWidget {
 
                 if (cartController.cartItems.isNotEmpty) {
                   return SelectedProductsWidget(
-                      newwindow: false,
+                    newwindow: false,
                       cartController: cartController,
                       currencySymbol: Details.currency ?? "");
                 }
@@ -142,35 +141,39 @@ class HomePage extends StatelessWidget {
                 child: Column(
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text(
-                                "Sub Total: (${cartController.cartItems.length} Item${cartController.cartItems.length > 1 ? 's' : ''})"),
-                            Text("Total Discount: "),
-                            Text("VAT: "),
-                            Text("Total: ",
-                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                    "Sub Total: (${cartController.cartItems.length} Item${cartController.cartItems.length > 1 ? 's' : ''})"),
+                                Text("Total Discount: "),
+                                Text("VAT: "),
+                                Text("Total: ",
+                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                            SizedBox(width: 8.w),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                    "${Details.currency}${cartController.subtotal.toStringAsFixed(2)}"),
+                                Text(
+                                    "${Details.currency}${cartController.totalDiscount.toStringAsFixed(2)}",
+                                    style: TextStyle(color: Colors.red)),
+                                Text(
+                                    "${Details.currency}${cartController.totalTax.toStringAsFixed(2)}"),
+                                Text(
+                                    "${Details.currency}${cartController.grandTotal.toStringAsFixed(2)}",
+                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                              ],
+                            )
                           ],
                         ),
-                        SizedBox(width: 8.w),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                                "${Details.currency}${cartController.subtotal.toStringAsFixed(2)}"),
-                            Text(
-                                "${Details.currency}${cartController.totalDiscount.toStringAsFixed(2)}",
-                                style: TextStyle(color: Colors.red)),
-                            Text(
-                                "${Details.currency}${cartController.totalTax.toStringAsFixed(2)}"),
-                            Text(
-                                "${Details.currency}${cartController.grandTotal.toStringAsFixed(2)}",
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                          ],
-                        )
                       ],
                     ),
                     SizedBox(height: 16.h),
@@ -185,7 +188,7 @@ class HomePage extends StatelessWidget {
                       onPressed: () {
                         print("Check");
                         Get.snackbar('Checkout', 'Proceeding to payment...');
-                        final args = {
+                        final args={
                           "cartItems": cartController.cartItems
                               .map((e) => e.toJson())
                               .toList(),
@@ -193,10 +196,9 @@ class HomePage extends StatelessWidget {
                           "totalDiscount": cartController.totalDiscount,
                           "totalTax": cartController.totalTax,
                           "grandTotal": cartController.grandTotal,
-                          "currency": Details.currency
                         };
-                        Get.toNamed('/checkout', id: 1, arguments: args);
-                     gotoCheckout(arguments: jsonEncode(args));
+                        Get.toNamed('/checkout', id: 1, arguments:args );
+                        gotoCheckout(arguments: jsonEncode(args));
                       },
                       child: Text(
                         'Checkout (${Details.currency}${cartController.grandTotal.toStringAsFixed(2)})',
@@ -222,6 +224,7 @@ void gotoCheckout({
       windowId!,
       "go_to_checkout",
       arguments,
+    
     );
   } else {}
 }
